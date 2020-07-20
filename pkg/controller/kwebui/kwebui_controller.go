@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	extenstionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	kubevirtv1alpha1 "github.com/kubevirt/web-ui-operator/pkg/apis/kubevirt/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	kubevirtv1alpha1 "github.com/kubevirt/web-ui-operator/pkg/apis/kubevirt/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -46,7 +46,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to secondary resource Pods and requeue the owner KWebUI
-	err = c.Watch(&source.Kind{Type: &extenstionsv1beta1.Deployment{}}, &handler.EnqueueRequestForOwner{
+	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &kubevirtv1alpha1.KWebUI{},
 	})
@@ -103,7 +103,7 @@ func (r *ReconcileKWebUI) Reconcile(request reconcile.Request) (reconcile.Result
 	}
 
 	// Fetch the kubevirt-web-ui Deployment
-	deployment := &extenstionsv1beta1.Deployment{}
+	deployment := &appsv1.Deployment{}
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: "console", Namespace: getWebUINamespace()}, deployment)
 	if err != nil {
 		reqLogger.Error(err, "Looking for the console Deployment object")

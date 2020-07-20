@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	extenstionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	kubevirtv1alpha1 "github.com/kubevirt/web-ui-operator/pkg/apis/kubevirt/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
-	kubevirtv1alpha1 "github.com/kubevirt/web-ui-operator/pkg/apis/kubevirt/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -31,10 +31,9 @@ const PhaseOtherError = "OTHER_ERROR"
 const PhaseNoDeployment = "NOT_DEPLOYED"
 const PhaseOwnerReferenceFailed = "OWNER_REFERENCE_FAILED"
 
-
 const VersionAutomatic = "automatic"
 
-func ReconcileExistingDeployment(r *ReconcileKWebUI, request reconcile.Request, instance *kubevirtv1alpha1.KWebUI, deployment *extenstionsv1beta1.Deployment) (reconcile.Result, error) {
+func ReconcileExistingDeployment(r *ReconcileKWebUI, request reconcile.Request, instance *kubevirtv1alpha1.KWebUI, deployment *appsv1.Deployment) (reconcile.Result, error) {
 	existingVersion := ""
 	for _, container := range deployment.Spec.Template.Spec.Containers {
 		if container.Name == WebUIContainerName {
@@ -178,7 +177,7 @@ func loginClient(namespace string) (string, error) {
 }
 
 func getWebUIVersion(versionInCR string) string {
-	return Def(versionInCR, os.Getenv("WEBUI_TAG"),"v1.4")
+	return Def(versionInCR, os.Getenv("WEBUI_TAG"), "v1.4")
 }
 
 func getWebUINamespace() string {
@@ -234,7 +233,7 @@ func generateInventory(instance *kubevirtv1alpha1.KWebUI, namespace string, acti
 }
 
 func setOwnerReference(r *ReconcileKWebUI, request reconcile.Request, instance *kubevirtv1alpha1.KWebUI) error {
-	deployment := &extenstionsv1beta1.Deployment{}
+	deployment := &appsv1.Deployment{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: "console", Namespace: getWebUINamespace()}, deployment)
 	if err != nil {
 		msg := "Failed to retrieve the just created kubevirt-web-ui Deployment object to set owner reference."
@@ -282,7 +281,7 @@ func updateStatus(r *ReconcileKWebUI, request reconcile.Request, phase string, m
 }
 
 func updateVersion(r *ReconcileKWebUI, request reconcile.Request, newVersion string) {
-	for counter := 0; counter < 5 ; counter++ {
+	for counter := 0; counter < 5; counter++ {
 		err := updateVersionWorker(r, request, newVersion)
 		if err == nil {
 			return
